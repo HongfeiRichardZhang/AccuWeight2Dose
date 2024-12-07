@@ -1,0 +1,208 @@
+# React Native Measure API Implementation Guide
+
+## 1. Project Setup
+
+```bash
+# Install required dependencies
+npm install @react-native-community/viewpager
+npm install react-native-permissions
+npm install react-native-vision-camera
+```
+
+## 2. iOS Implementation (ARKit)
+
+### ArView.swift
+```swift
+import ARKit
+import SceneKit
+
+class ArView: UIView {
+    private var sceneView: ARSCNView!
+    private var startNode: SCNNode?
+    private var endNode: SCNNode?
+    private var lineNode: SCNNode?
+    private var textNode: SCNNode?
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupAR()
+    }
+    
+    private func setupAR() {
+        sceneView = ARSCNView(frame: bounds)
+        let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = [.horizontal, .vertical]
+        sceneView.session.run(configuration)
+        sceneView.delegate = self
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        sceneView.addGestureRecognizer(tapGesture)
+        
+        addSubview(sceneView)
+    }
+    
+    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: sceneView)
+        guard let hitResult = sceneView.hitTest(location, types: .featurePoint).first else { return }
+        
+        let position = SCNVector3(
+            hitResult.worldTransform.columns.3.x,
+            hitResult.worldTransform.columns.3.y,
+            hitResult.worldTransform.columns.3.z
+        )
+        
+        if startNode == nil {
+            createStartNode(at: position)
+        } else if endNode == nil {
+            createEndNode(at: position)
+            measureDistance()
+        }
+    }
+    
+    private func measureDistance() {
+        guard let start = startNode?.position,
+              let end = endNode?.position else { return }
+              
+        let distance = sqrt(
+            pow(end.x - start.x, 2) +
+            pow(end.y - start.y, 2) +
+            pow(end.z - start.z, 2)
+        )
+        
+        updateMeasurement(distance: distance)
+    }
+}
+```
+
+### ArViewManager.m
+```objectivec
+#import "React/RCTViewManager.h"
+
+@interface RCT_EXTERN_MODULE(ArViewManager, RCTViewManager)
+RCT_EXPORT_VIEW_PROPERTY(onMeasurement, RCTDirectEventBlock)
+@end
+```
+
+## 3. Android Implementation (ARCore)
+
+### RnArView.kt
+```kotlin
+class RnArView(context: Context) : ArFragment() {
+    private var arSceneView: ArSceneView? = null
+    private var startAnchor: Anchor? = null
+    private var endAnchor: Anchor? = null
+    
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val view = super.onCreateView(inflater, container, savedInstanceState)
+        arSceneView = view?.findViewById(R.id.sceneform_ar_scene_view)
+        
+        setUpPlaneDiscoveryController()
+        setUpTapListener()
+        
+        return view
+    }
+    
+    private fun setUpTapListener() {
+        arSceneView?.scene?.setOnTapListener { hitResult, _, _ ->
+            if (startAnchor == null) {
+                createStartAnchor(hitResult)
+            } else if (endAnchor == null) {
+                createEndAnchor(hitResult)
+                measureDistance()
+            }
+        }
+    }
+    
+    private fun measureDistance() {
+        val start = startAnchor?.pose
+        val end = endAnchor?.pose
+        
+        if (start != null && end != null) {
+            val dx = end.tx() - start.tx()
+            val dy = end.ty() - start.ty()
+            val dz = end.tz() - start.tz()
+            
+            val distance = sqrt(dx * dx + dy * dy + dz * dz)
+            sendMeasurementEvent(distance)
+        }
+    }
+}
+```
+
+## 4. React Native Component
+
+### MeasureTool.tsx
+```typescript
+import React, { useCallback } from 'react';
+import { requireNativeComponent, Platform, StyleSheet } from 'react-native';
+
+const ArView = requireNativeComponent('ArView');
+
+interface MeasureToolProps {
+  onMeasurementComplete?: (distance: number) => void;
+  style?: any;
+}
+
+export const MeasureTool: React.FC = ({ 
+  onMeasurementComplete,
+  style 
+}) => {
+  const handleMeasurement = useCallback((event: any) => {
+    const distance = event.nativeEvent.distance;
+    onMeasurementComplete?.(distance);
+  }, [onMeasurementComplete]);
+
+  return (
+    
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1
+  }
+});
+```
+
+## 5. Usage Example
+
+```typescript
+import React from 'react';
+import { View, Text } from 'react-native';
+import { MeasureTool } from './MeasureTool';
+
+export const MeasureScreen = () => {
+  const handleMeasurement = (distance: number) => {
+    console.log(`Measured distance: ${distance.toFixed(2)} meters`);
+  };
+
+  return (
+    
+      
+    
+  );
+};
+```
+
+## Implementation Steps:
+
+1. Set up AR configurations in iOS and Android native projects
+2. Add required permissions in both platform manifests
+3. Create native AR views with measurement functionality
+4. Bridge native modules to React Native
+5. Create React Native wrapper component
+6. Handle measurements and user interactions
+
+## Required Permissions:
+
+### iOS (Info.plist):
+```xml
+NSCameraUsageDescription
+Camera access required for AR measurements
+```
+
+### Android (AndroidManifest.xml):
+```xml
+
+
+```
