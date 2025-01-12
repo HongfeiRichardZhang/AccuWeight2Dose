@@ -326,7 +326,7 @@ export default function CombinedScreen({ navigation }) {
       VividTrac: "Peds",
       Endotracheal_Tube_Cuffed:"4.0-4.5",
       LMA:"2",
-      KingTube:"1",
+      KingTube:"2",
       iGel:"2",
 
       // Airway emergency
@@ -374,9 +374,59 @@ export default function CombinedScreen({ navigation }) {
       D10_IV:"39 mL"
     },
     white: {
-      Fentanyl: "15 mcg/0.3mL",
-      Midazolam: "2 mg/0.4mL",
-      Epinephrine: "0.15 mg/1.5mL",
+      // Airway equipment
+      Miller_Blade: "2",
+      Mac_Blade: "2",
+      Airtraq: "1",
+      VividTrac: "Peds",
+      Endotracheal_Tube_Cuffed:"4.5-5.0",
+      LMA:"2",
+      KingTube:"2",
+      iGel:"2",
+
+      // Airway emergency
+      Etomidate_IV_IO:"5 mg/2.5 mL",
+      Ketamine_IV_IO:"30 mg/0.6 mL",
+      Succinylcholine_IV_IO:"32 mg/1.6 mL",
+      Rocuronium_IV_IO:"16 mg/1.6 mL",
+      Fentanyl_IV_IO: "15 mcg/0.3 mL",
+      Midazolam_IV_IO: "2 mg/0.4 mL",
+      Lorazepam_IV_IO:"1.6 mg/0.8 mL",
+      Ketamine_IV_IO:"30 mg/0.6 mL",
+
+      // Cardiac arrest
+      shock_1st:"35 J",
+      shock_2nd:"70 J",
+      shock_3rd:"70 - 160 J",
+      Epinephrine_1mg_10mL_IV: "0.15 mg/1.5 mL",
+      Atropine_IV_IO_ETT:"0.35 mg/3.5 mL",
+      Magnesium_sulfate_IV:"650 mg/1.3 mL",
+      Epinephrine_1mg_1mL_ETT:"1.5 mg/1.5 mL",
+      Amiodarone_IV:"85 mg/1.7 mL",
+      Lidocaine_IV:"16 mg/0.8 mL",
+
+      // Pressors
+      Epinephrine_Norepinephrine_gtt_IV_init_dos:"1.6 mcg/min (24 gtt/min)",
+      Epinephrine_Norepinephrine_gtt_IV_max_dos:"10 mcg/min (150 gtt/min)",
+
+      // Anaphylaxis
+      Epinephrine_1mg_1mL_IM:"0.2 mg/0.2 mL",
+      Diphenhydramine_IV_IM:"15 mg/0.3 mL",
+      Famotidine_IV:"8 mg/0.8 mL",
+      Methylprednisolone_IV:"31 mg/0.5 mL",
+      
+      // Pain
+      Fentanyl_IN:"25 mcg/0.5 mL",
+      Fentanyl_IV:"15 mcg/0.3 mL",
+      Ketorolac_IV:"9 mg/0.3 mL",
+      Tylenol_PO:"240 mg/7.5 mL",
+      Ibuprofen_PO:"160 mg/8 mL",
+
+      // Seizure;
+      Midazolam_IN:"3 mg/0.6 mL",
+      Midazolam_IV:"2 mg/0.4 mL",
+      Lorazepam_IV:"1.6 mg/0.8 mL",
+      D10_IV:"50 mL"
     },
     blue: {
       Fentanyl: "20 mcg/0.4mL",
