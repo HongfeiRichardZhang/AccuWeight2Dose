@@ -429,9 +429,59 @@ export default function CombinedScreen({ navigation }) {
       D10_IV:"50 mL"
     },
     blue: {
-      Fentanyl: "20 mcg/0.4mL",
-      Midazolam: "2 mg/0.4mL",
-      Epinephrine: "0.2 mg/2mL",
+      // Airway equipment
+      Miller_Blade: "2",
+      Mac_Blade: "2",
+      Airtraq: "1",
+      VividTrac: "Peds",
+      Endotracheal_Tube_Cuffed:"4.0-4.5",
+      LMA:"2",
+      KingTube:"1",
+      iGel:"2",
+
+      // Airway emergency
+      Etomidate_IV_IO:"4 mg/2 mL",
+      Ketamine_IV_IO:"25 mg/0.5 mL",
+      Succinylcholine_IV_IO:"26 mg/1.3 mL",
+      Rocuronium_IV_IO:"12 mg/1.2 mL",
+      Fentanyl_IV_IO: "15 mcg/0.3 mL",
+      Midazolam_IV_IO: "1.5 mg/0.3 mL",
+      Lorazepam_IV_IO:"1.2 mg/0.6 mL",
+      Ketamine_IV_IO:"25 mg/0.5 mL",
+
+      // Cardiac arrest
+      shock_1st:"25 J",
+      shock_2nd:"50 J",
+      shock_3rd:"50 - 140 J",
+      Epinephrine_1mg_10mL_IV: "0.13 mg/1.3 mL",
+      Atropine_IV_IO_ETT:"0.25 mg/2.5 mL",
+      Magnesium_sulfate_IV:"500 mg/1 mL",
+      Epinephrine_1mg_1mL_ETT:"1.3 mg/1.3 mL",
+      Amiodarone_IV:"65 mg/1.3 mL",
+      Lidocaine_IV:"12 mg/0.6 mL",
+
+      // Pressors
+      Epinephrine_Norepinephrine_gtt_IV_init_dos:"1.2 mcg/min (18 gtt/min)",
+      Epinephrine_Norepinephrine_gtt_IV_max_dos:"10 mcg/min (150 gtt/min)",
+
+      // Anaphylaxis
+      Epinephrine_1mg_1mL_IM:"0.1 mg/0.1 mL",
+      Diphenhydramine_IV_IM:"15 mg/0.3 mL",
+      Famotidine_IV:"7 mg/0.7 mL",
+      Methylprednisolone_IV:"25 mg/0.4 mL",
+      
+      // Pain
+      Fentanyl_IN:"20 mcg/0.4 mL",
+      Fentanyl_IV:"15 mcg/0.3 mL",
+      Ketorolac_IV:"6 mg/0.2 mL",
+      Tylenol_PO:"180 mg/5.6 mL",
+      Ibuprofen_PO:"140 mg/7 mL",
+
+      // Seizure;
+      Midazolam_IN:"2.5 mg/0.5 mL",
+      Midazolam_IV:"1.5 mg/0.3 mL",
+      Lorazepam_IV:"1.2 mg/0.6 mL",
+      D10_IV:"39 mL"
     },
     orange: {
       Fentanyl: "25 mcg/0.5mL",
