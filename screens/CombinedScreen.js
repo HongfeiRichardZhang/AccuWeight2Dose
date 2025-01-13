@@ -434,64 +434,164 @@ export default function CombinedScreen({ navigation }) {
       Mac_Blade: "2",
       Airtraq: "1",
       VividTrac: "Peds",
-      Endotracheal_Tube_Cuffed:"4.0-4.5",
-      LMA:"2",
-      KingTube:"1",
+      Endotracheal_Tube_Cuffed:"5.0-5.5",
+      LMA:"2.5",
+      KingTube:"2",
       iGel:"2",
 
       // Airway emergency
-      Etomidate_IV_IO:"4 mg/2 mL",
-      Ketamine_IV_IO:"25 mg/0.5 mL",
-      Succinylcholine_IV_IO:"26 mg/1.3 mL",
-      Rocuronium_IV_IO:"12 mg/1.2 mL",
-      Fentanyl_IV_IO: "15 mcg/0.3 mL",
-      Midazolam_IV_IO: "1.5 mg/0.3 mL",
-      Lorazepam_IV_IO:"1.2 mg/0.6 mL",
-      Ketamine_IV_IO:"25 mg/0.5 mL",
+      Etomidate_IV_IO:"6.2 mg/3.1 mL",
+      Ketamine_IV_IO:"40 mg/0.8 mL",
+      Succinylcholine_IV_IO:"42 mg/2.1 mL",
+      Rocuronium_IV_IO:"21 mg/2.1 mL",
+      Fentanyl_IV_IO: "20 mcg/0.4 mL",
+      Midazolam_IV_IO: "2 mg/0.4 mL",
+      Lorazepam_IV_IO:"2 mg/2 mL",
+      Ketamine_IV_IO:"40 mg/0.8 mL",
 
       // Cardiac arrest
-      shock_1st:"25 J",
-      shock_2nd:"50 J",
-      shock_3rd:"50 - 140 J",
-      Epinephrine_1mg_10mL_IV: "0.13 mg/1.3 mL",
-      Atropine_IV_IO_ETT:"0.25 mg/2.5 mL",
-      Magnesium_sulfate_IV:"500 mg/1 mL",
-      Epinephrine_1mg_1mL_ETT:"1.3 mg/1.3 mL",
-      Amiodarone_IV:"65 mg/1.3 mL",
-      Lidocaine_IV:"12 mg/0.6 mL",
+      shock_1st:"45 J",
+      shock_2nd:"90 J",
+      shock_3rd:"90 - 200 J",
+      Epinephrine_1mg_10mL_IV: "0.2 mg/2 mL",
+      Atropine_IV_IO_ETT:"0.4 mg/4 mL",
+      Magnesium_sulfate_IV:"850 mg/1.7 mL",
+      Epinephrine_1mg_1mL_ETT:"2 mg/2 mL",
+      Amiodarone_IV:"105 mg/2.1 mL",
+      Lidocaine_IV:"20 mg/1 mL",
 
       // Pressors
-      Epinephrine_Norepinephrine_gtt_IV_init_dos:"1.2 mcg/min (18 gtt/min)",
+      Epinephrine_Norepinephrine_gtt_IV_init_dos:"2 mcg/min (30 gtt/min)",
       Epinephrine_Norepinephrine_gtt_IV_max_dos:"10 mcg/min (150 gtt/min)",
 
       // Anaphylaxis
-      Epinephrine_1mg_1mL_IM:"0.1 mg/0.1 mL",
-      Diphenhydramine_IV_IM:"15 mg/0.3 mL",
-      Famotidine_IV:"7 mg/0.7 mL",
-      Methylprednisolone_IV:"25 mg/0.4 mL",
+      Epinephrine_1mg_1mL_IM:"0.2 mg/0.2 mL",
+      Diphenhydramine_IV_IM:"20 mg/0.4 mL",
+      Famotidine_IV:"10 mg/1 mL",
+      Methylprednisolone_IV:"44 mg/0.7 mL",
       
       // Pain
-      Fentanyl_IN:"20 mcg/0.4 mL",
-      Fentanyl_IV:"15 mcg/0.3 mL",
-      Ketorolac_IV:"6 mg/0.2 mL",
-      Tylenol_PO:"180 mg/5.6 mL",
-      Ibuprofen_PO:"140 mg/7 mL",
+      Fentanyl_IN:"35 mcg/0.7 mL",
+      Fentanyl_IV:"20 mcg/0.4 mL",
+      Ketorolac_IV:"9 mg/0.3 mL",
+      Tylenol_PO:"320 mg/10 mL",
+      Ibuprofen_PO:"200 mg/10 mL",
 
       // Seizure;
-      Midazolam_IN:"2.5 mg/0.5 mL",
-      Midazolam_IV:"1.5 mg/0.3 mL",
-      Lorazepam_IV:"1.2 mg/0.6 mL",
-      D10_IV:"39 mL"
+      Midazolam_IN:"4.5 mg/0.9 mL",
+      Midazolam_IV:"2 mg/0.4 mL",
+      Lorazepam_IV:"2 mg/1 mL",
+      D10_IV:"63 mL"
     },
     orange: {
-      Fentanyl: "25 mcg/0.5mL",
-      Midazolam: "2.5 mg/0.5mL",
-      Epinephrine: "0.25 mg/2.5mL",
+      // Airway equipment
+      Miller_Blade: "2",
+      Mac_Blade: "2-3",
+      Airtraq: "2",
+      VividTrac: "Adult",
+      Endotracheal_Tube_Cuffed:"6",
+      LMA:"2.5",
+      KingTube:"2.5",
+      iGel:"2.5",
+
+      // Airway emergency
+      Etomidate_IV_IO:"8 mg/4 mL",
+      Ketamine_IV_IO:"50 mg/1 mL",
+      Succinylcholine_IV_IO:"50 mg/2.5 mL",
+      Rocuronium_IV_IO:"25 mg/2.5 mL",
+      Fentanyl_IV_IO: "25 mcg/0.5 mL",
+      Midazolam_IV_IO: "2.5 mg/0.5 mL",
+      Lorazepam_IV_IO:"2 mg/2 mL",
+      Ketamine_IV_IO:"50 mg/1 mL",
+
+      // Cardiac arrest
+      shock_1st:"55 J",
+      shock_2nd:"110 J",
+      shock_3rd:"110 - 200 J",
+      Epinephrine_1mg_10mL_IV: "0.25 mg/2.5 mL",
+      Atropine_IV_IO_ETT:"0.5 mg/5 mL",
+      Magnesium_sulfate_IV:"1 gm/2 mL",
+      Epinephrine_1mg_1mL_ETT:"2.5 mg/2.5 mL",
+      Amiodarone_IV:"135 mg/2.7 mL",
+      Lidocaine_IV:"26 mg/1.3 mL",
+
+      // Pressors
+      Epinephrine_Norepinephrine_gtt_IV_init_dos:"2.7 mcg/min (40 gtt/min)",
+      Epinephrine_Norepinephrine_gtt_IV_max_dos:"10 mcg/min (150 gtt/min)",
+
+      // Anaphylaxis
+      Epinephrine_1mg_1mL_IM:"0.3 mg/0.3 mL",
+      Diphenhydramine_IV_IM:"25 mg/0.5 mL",
+      Famotidine_IV:"13 mg/1.3 mL",
+      Methylprednisolone_IV:"50 mg/0.8 mL",
+      
+      // Pain
+      Fentanyl_IN:"40 mcg/0.8 mL",
+      Fentanyl_IV:"25 mcg/0.5 mL",
+      Ketorolac_IV:"15 mg/0.5 mL",
+      Tylenol_PO:"325 mg/1 tab",
+      Ibuprofen_PO:"200 mg/1 tab",
+
+      // Seizure;
+      Midazolam_IN:"5.5 mg/1.1 mL",
+      Midazolam_IV:"2.5 mg/0.5 mL",
+      Lorazepam_IV:"2 mg/1 mL",
+      D10_IV:"84 mL"
     },
     green: {
-      Fentanyl: "35 mcg/0.7mL",
-      Midazolam: "3.5 mg/0.7mL",
-      Epinephrine: "0.35 mg/3.5mL",
+      // Airway equipment
+      Miller_Blade: "2",
+      Mac_Blade: "2-3",
+      Airtraq: "2",
+      VividTrac: "Adult",
+      Endotracheal_Tube_Cuffed:"6.0-6.5",
+      LMA:"3",
+      KingTube:"3",
+      iGel:"2.5-3",
+
+      // Airway emergency
+      Etomidate_IV_IO:"10 mg/5 mL",
+      Ketamine_IV_IO:"60 mg/1.2 mL",
+      Succinylcholine_IV_IO:"60 mg/3 mL",
+      Rocuronium_IV_IO:"30 mg/3 mL",
+      Fentanyl_IV_IO: "35 mcg/0.7 mL",
+      Midazolam_IV_IO: "3.5 mg/0.7 mL",
+      Lorazepam_IV_IO:"2 mg/2 mL",
+      Ketamine_IV_IO:"60 mg/1.2 mL",
+
+      // Cardiac arrest
+      shock_1st:"65 J",
+      shock_2nd:"130 J",
+      shock_3rd:"130 - 200 J",
+      Epinephrine_1mg_10mL_IV: "0.35 mg/3.5 mL",
+      Atropine_IV_IO_ETT:"0.5 mg/5 mL",
+      Magnesium_sulfate_IV:"1.4 gm/2.8 mL",
+      Epinephrine_1mg_1mL_ETT:"2.5 mg/2.5 mL",
+      Amiodarone_IV:"175 mg/3.5 mL",
+      Lidocaine_IV:"34 mg/1.7 mL",
+
+      // Pressors
+      Epinephrine_Norepinephrine_gtt_IV_init_dos:"3.3 mcg/min (50 gtt/min)",
+      Epinephrine_Norepinephrine_gtt_IV_max_dos:"10 mcg/min (150 gtt/min)",
+
+      // Anaphylaxis
+      Epinephrine_1mg_1mL_IM:"0.3 mg/0.3 mL",
+      Diphenhydramine_IV_IM:"35 mg/0.7 mL",
+      Famotidine_IV:"17 mg/1.7 mL",
+      Methylprednisolone_IV:"63 mg/1 mL",
+      
+      // Pain
+      Fentanyl_IN:"50 mcg/1 mL",
+      Fentanyl_IV:"35 mcg/0.7 mL",
+      Ketorolac_IV:"18 mg/0.6 mL",
+      Tylenol_PO:"325 mg/1 tab",
+      Ibuprofen_PO:"200 mg/1 tab",
+
+      // Seizure;
+      Midazolam_IN:"7 mg/1.4 mL",
+      Midazolam_IV:"3.5 mg/0.7 mL",
+      Lorazepam_IV:"2 mg/1 mL",
+      D10_IV:"100 mL"
     },
   };
 
