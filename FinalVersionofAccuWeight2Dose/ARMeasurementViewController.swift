@@ -24,7 +24,7 @@ class ARMeasurementViewController: UIViewController, ARSCNViewDelegate {
     private let instructionLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Tap to set start point, then tap again to measure height"
+        label.text = "Tap to set start point"
         label.textAlignment = .center
         label.backgroundColor = UIColor.black.withAlphaComponent(0.7)
         label.textColor = .white
@@ -34,8 +34,8 @@ class ARMeasurementViewController: UIViewController, ARSCNViewDelegate {
         return label
     }()
     
-    private var dots = [SCNNode]()
-    private var distanceTextNode = SCNNode()
+    private var markers = [SCNNode]()
+    private var distanceNode: SCNNode?
     private var line = SCNNode()
     private var currentMeasurement: Float = 0.0
     var onMeasurementComplete: ((Float) -> Void)?
@@ -93,49 +93,89 @@ class ARMeasurementViewController: UIViewController, ARSCNViewDelegate {
     
     // MARK: - Touch Handling
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if dots.count >= 2 {
-            for dot in dots {
-                dot.removeFromParentNode()
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: sceneView)
+        
+        // If we already have a measurement, clear it and start over
+        if markers.count >= 2 {
+            for marker in markers {
+                marker.removeFromParentNode()
             }
-            dots = []
+            markers = []
             line.removeFromParentNode()
-            distanceTextNode.removeFromParentNode()
+            distanceNode?.removeFromParentNode()
+            instructionLabel.text = "Tap to set start point"
+            return
         }
         
-        if let touch = touches.first {
-            let location = touch.location(in: sceneView)
-            let results = sceneView.hitTest(location, types: .featurePoint)
-            if let result = results.first {
-                addDot(at: result)
+        let results = sceneView.hitTest(location, types: .featurePoint)
+        if let result = results.first {
+            addMarker(at: result)
+            
+            if markers.count == 1 {
+                instructionLabel.text = "Tap to set end point"
+            } else if markers.count == 2 {
+                calculate()
+                instructionLabel.text = "Tap anywhere to measure again"
             }
         }
     }
     
     // MARK: - Measurement Functions
-    private func addDot(at location: ARHitTestResult) {
-        let dot = SCNSphere(radius: 0.007)
-        let material = SCNMaterial()
-        material.diffuse.contents = UIColor.red
-        dot.materials = [material]
-        let node = SCNNode(geometry: dot)
+    private func createTriangleMarker() -> SCNNode {
+        let height: Float = 0.03
+        let base: Float = 0.02
         
-        node.position = SCNVector3(
+        // Create vertices for a downward-pointing triangle
+        let vertices: [SCNVector3] = [
+            SCNVector3(0, 0, 0),            // Bottom point (tip)
+            SCNVector3(-base/2, height, 0),  // Top Left
+            SCNVector3(base/2, height, 0),   // Top Right
+        ]
+        
+        let indices: [Int32] = [0, 1, 2]
+        
+        let source = SCNGeometrySource(vertices: vertices)
+        let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
+        
+        let geometry = SCNGeometry(sources: [source], elements: [element])
+        
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.blue
+        material.isDoubleSided = true
+        geometry.materials = [material]
+        
+        let node = SCNNode(geometry: geometry)
+        
+        // Create a container node
+        let containerNode = SCNNode()
+        containerNode.addChildNode(node)
+        
+        return containerNode
+    }
+    
+    private func addMarker(at location: ARHitTestResult) {
+        let markerNode = createTriangleMarker()
+        
+        // Position the marker exactly at the point
+        markerNode.position = SCNVector3(
             x: location.worldTransform.columns.3.x,
             y: location.worldTransform.columns.3.y,
             z: location.worldTransform.columns.3.z
         )
         
-        sceneView.scene.rootNode.addChildNode(node)
-        dots.append(node)
+        // Make the triangle look at the camera
+        let lookAtConstraint = SCNBillboardConstraint()
+        lookAtConstraint.freeAxes = .Y  // Only rotate around Y axis
+        markerNode.constraints = [lookAtConstraint]
         
-        if dots.count >= 2 {
-            calculate()
-        }
+        sceneView.scene.rootNode.addChildNode(markerNode)
+        markers.append(markerNode)
     }
     
     private func calculate() {
-        let firstPoint = dots[0]
-        let secondPoint = dots[1]
+        let firstPoint = markers[0]
+        let secondPoint = markers[1]
         let distance = sqrt(
             pow((secondPoint.position.x - firstPoint.position.x), 2) +
             pow((secondPoint.position.y - firstPoint.position.y), 2) +
@@ -143,11 +183,89 @@ class ARMeasurementViewController: UIViewController, ARSCNViewDelegate {
         )
         
         currentMeasurement = round(abs(distance * 100) * 10) / 10
-        printTextOnScreen(distance: String(format: "%.1f", currentMeasurement), position: secondPoint.position)
-        addLines(firstPoint, secondPoint)
         
-        instructionLabel.text = "Measurement complete! Tap to measure again or press Done to save"
+        // Calculate midpoint for label position
+        let midPoint = SCNVector3(
+            (firstPoint.position.x + secondPoint.position.x) / 2,
+            (firstPoint.position.y + secondPoint.position.y) / 2 + 0.02,
+            (firstPoint.position.z + secondPoint.position.z) / 2
+        )
+        
+        // Create and add distance label
+        let labelNode = createDistanceLabel(distance: currentMeasurement, position: midPoint)
+        sceneView.scene.rootNode.addChildNode(labelNode)
+        
+        addLines(firstPoint, secondPoint)
         doneButton.isHidden = false
+    }
+    
+    private func getColorForHeight(_ height: Float) -> UIColor {
+        let heightRanges = DosageData.heightWeightRanges
+        
+        for range in heightRanges {
+            if height >= Float(range.heightMin) && height <= Float(range.heightMax) {
+                switch range.color {
+                case "grey": return .gray
+                case "pink": return .systemPink
+                case "red": return .red
+                case "purple": return .purple
+                case "yellow": return .yellow
+                case "white": return .white
+                case "blue": return .blue
+                case "orange": return .orange
+                case "green": return .green
+                default: return .black
+                }
+            }
+        }
+        return .black
+    }
+    
+    private func createDistanceLabel(distance: Float, position: SCNVector3) -> SCNNode {
+        // Remove existing distance node
+        distanceNode?.removeFromParentNode()
+        
+        // Get text color based on height range
+        let textColor = getColorForHeight(distance)
+        
+        // Create background plane - make it wider to accommodate both units
+        let backgroundGeometry = SCNPlane(width: 0.15, height: 0.04)
+        let backgroundMaterial = SCNMaterial()
+        // Use dark background for white text, light background for other colors
+        backgroundMaterial.diffuse.contents = textColor == .white ? 
+            UIColor.black.withAlphaComponent(0.8) : 
+            UIColor.white.withAlphaComponent(0.8)
+        backgroundGeometry.materials = [backgroundMaterial]
+        let backgroundNode = SCNNode(geometry: backgroundGeometry)
+        
+        // Create text with both units
+        let inchesValue = distance / 2.54
+        let text = SCNText(string: String(format: "%.1f cm | %.1f in", distance, inchesValue), extrusionDepth: 1)
+        text.font = UIFont.systemFont(ofSize: 8)
+        text.firstMaterial?.diffuse.contents = textColor
+        
+        let textNode = SCNNode(geometry: text)
+        textNode.scale = SCNVector3(0.002, 0.002, 0.002)
+        
+        // Center text in background
+        let (min, max) = text.boundingBox
+        let textWidth = CGFloat(max.x - min.x)
+        textNode.position = SCNVector3(-Float(textWidth) * 0.001, -0.01, 0.001)
+        
+        // Create container node
+        let containerNode = SCNNode()
+        containerNode.addChildNode(backgroundNode)
+        containerNode.addChildNode(textNode)
+        containerNode.position = position
+        
+        // Add billboard constraint to always face camera
+        let billboardConstraint = SCNBillboardConstraint()
+        containerNode.constraints = [billboardConstraint]
+        
+        // Store reference to container node
+        distanceNode = containerNode
+        
+        return containerNode
     }
     
     private func addLines(_ firstPoint: SCNNode, _ secondPoint: SCNNode) {
@@ -165,16 +283,6 @@ class ARMeasurementViewController: UIViewController, ARSCNViewDelegate {
         
         line = SCNNode(geometry: linesGeometry)
         sceneView.scene.rootNode.addChildNode(line)
-    }
-    
-    private func printTextOnScreen(distance: String, position: SCNVector3) {
-        distanceTextNode.removeFromParentNode()
-        let distanceText = SCNText(string: "\(distance)cm", extrusionDepth: 1.0)
-        distanceText.firstMaterial?.diffuse.contents = UIColor.blue
-        distanceTextNode = SCNNode(geometry: distanceText)
-        distanceTextNode.position = SCNVector3(position.x, position.y + 0.05, position.z)
-        distanceTextNode.scale = SCNVector3(0.01, 0.01, 0.01)
-        sceneView.scene.rootNode.addChildNode(distanceTextNode)
     }
     
     // MARK: - Actions
