@@ -17,6 +17,7 @@ struct MedicationsView: View {
     let height: Double
     let weight: String
     let weightColor: Color
+    let bodyType: BodyType
     @State private var searchText = ""
     @State private var expandedSections: Set<String> = []
     
@@ -101,21 +102,38 @@ struct MedicationsView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Weight Display
-            HStack {
-                Text("Weight:")
-                    .foregroundColor(.black)
-                Text("\(weight) kg")
-                    .foregroundColor(weightColor)
+            VStack(spacing: 4) {
+                HStack {
+                    Text("Weight:")
+                        .foregroundColor(.black)
+                        .font(.system(size: 17))
+                    Text("\(weight) kg")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(weightColor)
+                        )
+                }
+                
+                if bodyType != .normal {
+                    Text("(\(bodyType.rawValue) body type)")
+                        .font(.system(size: 13))
+                        .foregroundColor(.blue)
+                }
             }
-            .font(.system(size: 17))
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.white)
             
             // Search Bar
             TextField("Search medications...", text: $searchText)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
+                .padding(.horizontal)
+                .padding(.vertical, 8)
                 .background(Color.white)
             
             // Medication List
@@ -138,7 +156,7 @@ struct MedicationsView: View {
                                             .foregroundColor(.blue)
                                             .font(.headline)
                                         Spacer()
-                                        Image(systemName: expandedSections.contains(category.name) ? "chevron.up" : "chevron.down")
+                                        Image(systemName: expandedSections.contains(category.name) ? "chevron.down" : "chevron.right")
                                             .foregroundColor(.gray)
                                     }
                                     .padding()
@@ -178,7 +196,8 @@ struct MedicationsView: View {
         let dosageKey: String
         
         var body: some View {
-            let dosageDetails = DosageData.getDosageDetails(height, itemName: dosageKey)
+            let weightValue = Double(weight) ?? 0
+            let dosageDetails = DosageData.getDosageDetails(weightValue, itemName: dosageKey)
             
             VStack(alignment: .leading, spacing: 8) {
                 // Weight display
@@ -260,6 +279,6 @@ struct MedicationsView: View {
 
 struct MedicationsView_Previews: PreviewProvider {
     static var previews: some View {
-        MedicationsView(height: 50.0, weight: "6", weightColor: .blue)
+        MedicationsView(height: 50.0, weight: "6", weightColor: .blue, bodyType: .normal)
     }
 }

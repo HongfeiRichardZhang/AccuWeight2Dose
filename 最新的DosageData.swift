@@ -52,12 +52,30 @@ struct DosageData {
         HeightWeightRange(heightMin: 147.2, heightMax: 149.1, weight: 37, color: "green")
     ]
 
-    static let adultWeightRanges: [AdultWeightRange] = [
-        AdultWeightRange(weightMin: 37, weightMax: 45, color: "orange"),
-        AdultWeightRange(weightMin: 46, weightMax: 55, color: "green"),
-        AdultWeightRange(weightMin: 56, weightMax: 65, color: "blue"),
-        AdultWeightRange(weightMin: 66, weightMax: Int.max, color: "purple")
+    static let adultWeightRanges: [adultWeightRanges] = [
+        adultWeightRanges(weightMin: 3, weightMax: 5; color: "grey"),
+        adultWeightRanges(weightMin: 6, weightMax: 7; color: "pink"),
+        adultWeightRanges(weightMin: 8, weightMax: 9; color: "red"),
+        adultWeightRanges(weightMin: 10, weightMax: 11; color: "purple"),
+        adultWeightRanges(weightMin: 12, weightMax: 14; color: "yellow"),
+        adultWeightRanges(weightMin: 15, weightMax: 18; color: "white"),
+        adultWeightRanges(weightMin: 19, weightMax: 23; color: "blue"),
+        adultWeightRanges(weightMin: 24, weightMax: 29; color: "orange"),
+        adultWeightRanges(weightMin: 30, weightMax: 36; color: "green"),
+        adultWeightRanges(weightMin: 37, weightMax: 45, color: "greenDot"),
+        adultWeightRanges(weightMin: 46, weightMax: 55, color: "blueDot"),
+        adultWeightRanges(weightMin: 56, weightMax: 65, color: "orangeDot"),
+        adultWeightRanges(weightMin: 66, weightMax: Int.max, color: "lightBlueDot")
     ]
+
+    static func getColorForWeight(_weight: Double) -> String {
+        for range in adultWeightRanges {
+            if weight >= Double(range.weightMin) && weight < Double(range.weightMax) {
+                return range.color
+            }
+        }
+        return "grey"
+    }
 
     static func getColorForHeight(_ height: Double) -> String {
         for range in heightWeightRanges {
@@ -66,39 +84,6 @@ struct DosageData {
             }
         }
         return "grey"
-    }
-    
-    static func getColorForWeight(_ weight: Double) -> String {
-        switch weight {
-        case 3..<6:
-            return "grey"
-        case 6..<8:
-            return "pink"
-        case 8..<10:
-            return "red"
-        case 10..<12:
-            return "purple"
-        case 12..<15:
-            return "yellow"
-        case 15..<19:
-            return "white"
-        case 19..<24:
-            return "blue"
-        case 24..<30:
-            return "orange"
-        case 30..<37:
-            return "green"
-        case 37..<46:
-            return "greenDot"
-        case 46..<56:
-            return "blueDot"
-        case 56..<66:
-            return "orangeDot"
-        case 66...:
-            return "lightBlueDot"
-        default:
-            return "grey"
-        }
     }
     
     static let dosageMap: [String: [String: String]] = [
@@ -655,13 +640,8 @@ struct DosageData {
         return dosageMap[color]?[itemName] ?? ""
     }
     
-    static func getDosageForWeight(_ weight: Double, itemName: String) -> String {
-        let color = getColorForWeight(weight)
-        return dosageMap[color]?[itemName] ?? ""
-    }
-    
-    static func getDosageDetails(_ weight: Double, itemName: String) -> (dose: String, volume: String, concentration: String) {
-        let color = getColorForWeight(weight)
+    static func getDosageDetails(_ height: Double, itemName: String) -> (dose: String, volume: String, concentration: String) {
+        let color = getColorForHeight(height)
         let dosageInfo = dosageMap[color]?[itemName] ?? ""
         let concentration = getMedicationConcentration(itemName)
         

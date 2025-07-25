@@ -6,14 +6,26 @@
 //
 
 import SwiftUI
+import Combine
+import ARKit
+import MetalKit
 
 struct ContentView: View {
     @State private var weight: String = ""
     @State private var height: String = ""
     @State private var selectedWeightUnit: String = "kg"
     @State private var selectedHeightUnit: String = "cm"
+    @State private var selectedBodyType: BodyType = .normal
     @State private var showMedications = false
     @State private var showARMeasurement = false
+    @State private var showLiDARScanner = false
+    
+    // 添加 DosageData 引用
+    private let dosageData = DosageData.dosageMap
+    
+    // 添加错误状态
+    @State private var weightError: String = ""
+    @State private var heightError: String = ""
     
     // 存储最初的输入字符串
     @State private var initialWeightInput: String = ""
@@ -33,6 +45,10 @@ struct ContentView: View {
     private let lbToKg: Double = 0.453592
     private let cmToIn: Double = 0.393701
     private let inToCm: Double = 2.54
+    
+    // 验证范围
+    private let validWeightRangeKg = 3.0...200.0
+    private let validHeightRangeCm = 41.4...149.1
     
     // 身高体重对应数据
     private let heightWeightData: [(heightMin: Double, heightMax: Double, weight: Int, color: Color)] = [
@@ -73,50 +89,118 @@ struct ContentView: View {
         (147.2, 149.1, 37, .green)
     ]
     
-    // 计算预测体重和范围
-    private func calculateWeightRange(height: Double) -> (weight: Int, range: String, color: Color)? {
-        guard let data = heightWeightData.first(where: { $0.heightMin <= height && height <= $0.heightMax }) else {
-            return nil
+    // 根据身高计算体重范围
+    private func calculateWeightRange(height: Double) -> (Int, String, Color)? {
+        for (index, range) in heightWeightData.enumerated() {
+            if height >= range.heightMin && height < range.heightMax {
+                let baseWeight = range.weight
+                let adjustedWeight = Int(Double(baseWeight) * selectedBodyType.weightMultiplier)
+                let heightRange = String(format: "%.1f-%.1f cm", range.heightMin, range.heightMax)
+                // 使用调整后的体重来获取颜色
+                return (adjustedWeight, heightRange, getColorForWeight(Double(adjustedWeight)))
+            }
         }
-        return (data.weight, String(format: "%.1f-%.1f cm", data.heightMin, data.heightMax), data.color)
+        return nil
     }
-
+    
+    // 验证输入值是否在有效范围内
+    private var isInputValid: Bool {
+        // 如果输入了体重
+        if !weight.isEmpty {
+            if let weightValue = Double(weight) {
+                let weightInKg = selectedWeightUnit == "kg" ? weightValue : weightValue * lbToKg
+                if weightInKg < validWeightRangeKg.lowerBound {
+                    weightError = selectedWeightUnit == "kg" ? 
+                        "Weight must be at least \(String(format: "%.1f", validWeightRangeKg.lowerBound)) kg" :
+                        "Weight must be at least \(String(format: "%.1f", validWeightRangeKg.lowerBound * kgToLb)) lb"
+                    return false
+                }
+                weightError = ""
+                return true
+            }
+            return false
+        }
+        
+        // 如果没有输入体重，但输入了身高
+        if !height.isEmpty {
+            if let heightValue = Double(height) {
+                let heightInCm = selectedHeightUnit == "in" ? heightValue * inToCm : heightValue
+                if heightInCm < validHeightRangeCm.lowerBound || heightInCm > validHeightRangeCm.upperBound {
+                    heightError = selectedHeightUnit == "cm" ?
+                        "Height must be between \(String(format: "%.1f", validHeightRangeCm.lowerBound))-\(String(format: "%.1f", validHeightRangeCm.upperBound)) cm" :
+                        "Height must be between \(String(format: "%.1f", validHeightRangeCm.lowerBound * cmToIn))-\(String(format: "%.1f", validHeightRangeCm.upperBound * cmToIn)) in"
+                    return false
+                }
+                heightError = ""
+                return true
+            }
+            return false
+        }
+        
+        return false
+    }
+    
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    Text("AccuWeight2Dose")
-                        .font(.system(size: 32, weight: .bold))
+            VStack {  
+                VStack(spacing: 8) {
+                    Text("@AccuWeight2Dose")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
                         .padding(.top, 10)
-                        .padding(.bottom, 25)
-                    
-                    VStack(alignment: .leading, spacing: 25) {
+
+                    // Body Data Card
+                    VStack(alignment: .leading, spacing: 15) {  
                         Text("Body Data")
                             .font(.title2)
-                            .fontWeight(.semibold)
-                            .padding(.bottom, 5)
+                            .bold()
+                            .padding(.bottom, 2)  
                         
-                        VStack(alignment: .leading, spacing: 25) {
+                        VStack(alignment: .leading, spacing: 15) {  
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Weight (recommended):")
                                     .foregroundColor(.gray)
                                     .font(.system(size: 17))
                                 
-                                HStack(spacing: 12) {
-                                    TextField("Enter weight", text: $weight)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .keyboardType(.decimalPad)
-                                        .frame(maxWidth: .infinity)
-                                        .font(.system(size: 17))
-                                        .onChange(of: weight) { newValue in
-                                            if let value = Double(newValue) {
-                                                if initialWeightInput.isEmpty {
-                                                    initialWeightInput = newValue
+                                Text("(Range: 3 kg / 6.6 lb and above)")
+                                    .foregroundColor(.gray)
+                                    .font(.system(size: 12))
+                                
+                                HStack {
+                                    ZStack(alignment: .trailing) {
+                                        TextField("Enter weight", text: $weight)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .keyboardType(.decimalPad)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .stroke(weightError.isEmpty ? Color.clear : Color.red, lineWidth: 1)
+                                            )
+                                            .onChange(of: weight) { newValue in
+                                                if let value = Double(newValue) {
+                                                    if initialWeightInput.isEmpty {
+                                                        initialWeightInput = newValue
+                                                    }
+                                                    originalWeight = value
+                                                    originalWeightUnit = selectedWeightUnit
                                                 }
-                                                originalWeight = value
-                                                originalWeightUnit = selectedWeightUnit
+                                            }
+                                        
+                                        if !weight.isEmpty {
+                                            Button(action: {
+                                                weight = ""
+                                                weightError = ""
+                                                initialWeightInput = ""
+                                                originalWeight = 0.0  // 重置原始重量值
+                                                originalWeightUnit = selectedWeightUnit  // 重置原始单位
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundColor(.gray)
+                                                    .padding(.trailing, 8)
                                             }
                                         }
+                                    }
                                     
                                     Picker("Weight Unit", selection: $selectedWeightUnit) {
                                         ForEach(weightUnits, id: \.self) { unit in
@@ -133,6 +217,12 @@ struct ContentView: View {
                                         }
                                     }
                                 }
+                                
+                                if !weightError.isEmpty {
+                                    Text(weightError)
+                                        .foregroundColor(.red)
+                                        .font(.system(size: 12))
+                                }
                             }
                             
                             VStack(alignment: .leading, spacing: 8) {
@@ -140,21 +230,43 @@ struct ContentView: View {
                                     .foregroundColor(.gray)
                                     .font(.system(size: 17))
                                 
-                                HStack(spacing: 12) {
-                                    TextField("Enter height", text: $height)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .keyboardType(.decimalPad)
-                                        .frame(maxWidth: .infinity)
-                                        .font(.system(size: 17))
-                                        .onChange(of: height) { newValue in
-                                            if let value = Double(newValue) {
-                                                if initialHeightInput.isEmpty {
-                                                    initialHeightInput = newValue
+                                Text("(Range: 41.4-149.1 cm or 16.3-58.8 in)")
+                                    .foregroundColor(.gray)
+                                    .font(.system(size: 12))
+                                
+                                HStack {
+                                    ZStack(alignment: .trailing) {
+                                        TextField("Enter height", text: $height)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .keyboardType(.decimalPad)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .stroke(heightError.isEmpty ? Color.clear : Color.red, lineWidth: 1)
+                                            )
+                                            .onChange(of: height) { newValue in
+                                                if let value = Double(newValue) {
+                                                    if initialHeightInput.isEmpty {
+                                                        initialHeightInput = newValue
+                                                    }
+                                                    originalHeight = value
+                                                    originalHeightUnit = selectedHeightUnit
                                                 }
-                                                originalHeight = value
-                                                originalHeightUnit = selectedHeightUnit
+                                            }
+                                        
+                                        if !height.isEmpty {
+                                            Button(action: {
+                                                height = ""
+                                                heightError = ""
+                                                initialHeightInput = ""
+                                                originalHeight = 0.0  // 重置原始高度值
+                                                originalHeightUnit = selectedHeightUnit  // 重置原始单位
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundColor(.gray)
+                                                    .padding(.trailing, 8)
                                             }
                                         }
+                                    }
                                     
                                     Picker("Height Unit", selection: $selectedHeightUnit) {
                                         ForEach(heightUnits, id: \.self) { unit in
@@ -171,6 +283,29 @@ struct ContentView: View {
                                         }
                                     }
                                 }
+                                
+                                if !heightError.isEmpty {
+                                    Text(heightError)
+                                        .foregroundColor(.red)
+                                        .font(.system(size: 12))
+                                }
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Body Type:")
+                                    .foregroundColor(.gray)
+                                    .font(.system(size: 17))
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 15) {
+                                        ForEach([BodyType.slim, .lean, .normal, .chubby, .overweight], id: \.self) { bodyType in
+                                            BodyTypeButton(bodyType: bodyType, isSelected: selectedBodyType == bodyType) {
+                                                selectedBodyType = bodyType
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, 4)
+                                }
                             }
                         }
                         
@@ -186,6 +321,29 @@ struct ContentView: View {
                                 .font(.system(size: 17, weight: .medium))
                         }
                         .padding(.top, 5)
+                        
+                        Button(action: {
+                            // 尝试使用 URL Scheme 打开 LiDAR 应用
+                            if let url = URL(string: "lidarscanner://scan") {
+                                UIApplication.shared.open(url, options: [:]) { success in
+                                    if !success {
+                                        // 如果无法打开外部应用，则回退到内部模拟
+                                        showLiDARScanner = true
+                                    }
+                                }
+                            } else {
+                                showLiDARScanner = true
+                            }
+                        }) {
+                            Text("LiDAR Measure")
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.blue.opacity(0.1))
+                                .foregroundColor(.blue)
+                                .cornerRadius(12)
+                                .font(.system(size: 17, weight: .medium))
+                        }
+                        .padding(.top, 0)
                     }
                     .padding(20)
                     .background(Color(.systemBackground))
@@ -198,22 +356,38 @@ struct ContentView: View {
                             .font(.title2)
                             .fontWeight(.semibold)
                             .padding(.bottom, 5)
+                            .padding(.top, -10)
                         
                         ZStack {
-                            RoundedRectangle(cornerRadius: 12)
+                            Rectangle()
                                 .fill(Color(.systemGray6))
-                                .frame(maxWidth: .infinity, minHeight: 90)
+                                .frame(maxWidth: .infinity, minHeight: 110)
                             
-                            if let heightValue = Double(height) {
+                            if !weight.isEmpty, let weightValue = Double(weight) {
+                                let textColor = getColorForWeight(weightValue)
+                                VStack(spacing: 8) {
+                                    Text("\(String(format: "%.0f", weightValue)) kg")
+                                        .font(.system(size: 32, weight: .bold))
+                                        .foregroundColor(textColor)
+                                    Text("Measured via LiDAR")
+                                        .font(.system(size: 15))
+                                        .foregroundColor(.gray)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 90)
+                            } else if !height.isEmpty, let heightValue = Double(height) {
                                 let cmHeight = selectedHeightUnit == "in" ? heightValue * inToCm : heightValue
                                 if let (predictedWeight, heightRange, textColor) = calculateWeightRange(height: cmHeight) {
+                                    let adjustedWeight = Double(predictedWeight)
                                     VStack(spacing: 8) {
-                                        Text("\(predictedWeight) kg")
+                                        Text("\(String(format: "%.0f", adjustedWeight)) kg")
                                             .font(.system(size: 32, weight: .bold))
                                             .foregroundColor(textColor)
                                         Text("Height range: \(heightRange)")
                                             .font(.system(size: 15))
                                             .foregroundColor(.gray)
+                                        Text(selectedBodyType != .normal ? "Adjusted for \(selectedBodyType.rawValue) body type" : " ")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(.blue)
                                     }
                                     .frame(maxWidth: .infinity, minHeight: 90)
                                 } else {
@@ -225,7 +399,7 @@ struct ContentView: View {
                                             .font(.system(size: 13))
                                             .foregroundColor(.gray)
                                     }
-                                    .frame(maxWidth: .infinity, minHeight: 90)
+                                    .frame(maxWidth: .infinity, minHeight: 110)
                                 }
                             } else {
                                 VStack(spacing: 6) {
@@ -236,7 +410,7 @@ struct ContentView: View {
                                         .font(.system(size: 13))
                                         .foregroundColor(.gray)
                                 }
-                                .frame(maxWidth: .infinity, minHeight: 90)
+                                .frame(maxWidth: .infinity, minHeight: 110)
                             }
                         }
                     }
@@ -246,22 +420,21 @@ struct ContentView: View {
                     .shadow(radius: 1)
                     .padding(.horizontal)
                     
-                    Spacer(minLength: 50)
-                    
                     Button(action: {
                         showMedications = true
                     }) {
                         Text("Go to Medication")
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background((!weight.isEmpty || !height.isEmpty) ? Color.blue : Color.gray)
+                            .background(!isInputValid ? Color.gray : Color.blue)
                             .foregroundColor(.white)
                             .cornerRadius(12)
                             .font(.system(size: 17, weight: .semibold))
                     }
-                    .disabled(weight.isEmpty && height.isEmpty)
+                    .disabled(!isInputValid)
+                    .padding(.top, 0)
                     .padding(.horizontal)
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 20)
                 }
             }
             .contentShape(Rectangle())
@@ -272,30 +445,102 @@ struct ContentView: View {
             .ignoresSafeArea(.keyboard)
             .background(Color(.systemGroupedBackground))
             .navigationDestination(isPresented: $showMedications) {
-                let (currentWeight, weightColor) = getCurrentWeight()
-                let heightValue = Double(height) ?? 0.0
-                MedicationsView(height: heightValue, weight: currentWeight, weightColor: weightColor)
+                NavigationDestinationView()
             }
             .fullScreenCover(isPresented: $showARMeasurement) {
                 ARMeasurementView(height: $height)
             }
+            .fullScreenCover(isPresented: $showLiDARScanner) {
+                LiDARScannerView { kg in
+                    weight = String(format: "%.2f", kg)
+                    selectedWeightUnit = "kg"
+                }
+            }
         }
+    }
+    
+    @ViewBuilder
+    private func NavigationDestinationView() -> some View {
+        let (weightValue, weightColor) = getCurrentWeight()
+        let heightValue = Double(height) ?? 0.0
+        MedicationsView(height: heightValue,
+                       weight: weightValue,
+                       weightColor: weightColor,
+                       bodyType: selectedBodyType)
     }
     
     // 获取当前使用的体重值和颜色
     private func getCurrentWeight() -> (String, Color) {
-        if !weight.isEmpty {
-            // 如果输入了体重，直接使用输入的体重
-            let weightValue = selectedWeightUnit == "kg" ? weight : String(format: "%.1f", (Double(weight) ?? 0) * lbToKg)
-            return (weightValue, .black)  // 使用黑色表示用户输入的体重
-        } else if !height.isEmpty, let heightValue = Double(height) {
-            // 如果只输入了身高，使用预测的体重
-            let cmHeight = selectedHeightUnit == "in" ? heightValue * inToCm : heightValue
-            if let (predictedWeight, _, textColor) = calculateWeightRange(height: cmHeight) {
-                return (String(predictedWeight), textColor)
+        // 如果输入了体重，直接返回体重和对应的颜色
+        if !weight.isEmpty, let weightValue = Double(weight) {
+            let weightInKg = selectedWeightUnit == "kg" ? weightValue : weightValue * lbToKg
+            let color = getColorForWeight(weightInKg)
+            return (String(format: "%.0f", weightInKg), color)
+        }
+        
+        // 如果没有体重但有身高，使用身高计算
+        if !height.isEmpty, let heightValue = Double(height) {
+            let heightInCm = selectedHeightUnit == "cm" ? heightValue : heightValue * inToCm
+            if let (predictedWeight, _, color) = calculateWeightRange(height: heightInCm) {
+                let adjustedWeight = Double(predictedWeight)
+                return (String(format: "%.0f", adjustedWeight), color)
             }
         }
-        return ("0", .black)  // 默认返回值
+        
+        return ("0", .gray)
+    }
+    
+    // 根据体重获取对应的颜色
+    private func getColorForWeight(_ weightInKg: Double) -> Color {
+        switch weightInKg {
+        case 3...5:
+            return .gray
+        case 6...7:
+            return .pink
+        case 8...9:
+            return .red
+        case 10...11:
+            return .purple
+        case 12...14:
+            return .yellow
+        case 15...18:
+            return .white
+        case 19...23:
+            return .blue
+        case 24...29:
+            return .orange
+        case 30...36:
+            return .green
+        case 37...45:
+            return .green  // 对应 greenDot
+        case 46...55:
+            return .blue   // 对应 blueDot
+        case 56...65:
+            return .orange    // 对应 orangeDot
+        case 66...:
+            return .blue  // 对应 lightBlueDot
+        default:
+            return .gray
+        }
+    }
+    
+    // 获取体重对应的剂量数据
+    private func getDosageColor() -> String {
+        guard let weightValue = Double(weight) else { return "" }
+        let weightInKg = selectedWeightUnit == "kg" ? weightValue : weightValue * lbToKg
+        
+        switch weightInKg {
+        case 37...45:
+            return "greenDot"
+        case 46...55:
+            return "blueDot"
+        case 56...65:
+            return "orangeDot"
+        case 66...:
+            return "lightBlueDot"
+        default:
+            return ""
+        }
     }
     
     // 重量单位转换函数
@@ -324,5 +569,38 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+// 将体型按钮抽取为单独的视图组件
+struct BodyTypeButton: View {
+    let bodyType: BodyType
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            ZStack {
+                Rectangle()
+                    .fill(Color.white)
+                    .frame(width: 60, height: 60)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+                    )
+                    .background(isSelected ? Color.blue.opacity(0.1) : Color.clear)
+                
+                Image(bodyType.iconName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40, height: 40)
+            }
+            .onTapGesture(perform: action)
+            
+            Text(bodyType.rawValue)
+                .font(.system(size: 12))
+                .foregroundColor(isSelected ? .blue : .gray)
+        }
     }
 }
